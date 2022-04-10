@@ -1,4 +1,5 @@
 # Librerias utilizadas
+import gym
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,6 +9,7 @@ pd.set_option('display.float_format',  '{:,.2f}'.format)
 class histogram_retracement() :
     def __init__(self, stock, dataframe, k_entry, k_exit, EMA_days_12, EMA_days_26, STD_rw, MXMN_rw):
         self.stock = stock
+        self.name = str(self.stock)
         self.dataframe = dataframe
         self.k_entry = k_entry
         self.k_exit = k_exit
@@ -15,6 +17,47 @@ class histogram_retracement() :
         self.EMA_days_26 = EMA_days_26
         self.STD_rw = STD_rw
         self.MXMN_rw = MXMN_rw
+
+    def count_trades(self):
+        trades = {"Type of trade":[], "start":[],"end":[], "returns":[], "sharp":[], "Nº of days":[]}
+        rows = self.dataframe.shape[0]
+        Position = self.dataframe[f'Position_{self.stock}']
+        inicio=0
+        final=0
+        for row in range(1,rows):
+            if ((Position[row] == 1) or (Position[row] == -1)) & (Position[row-1] == 0):
+                if (Position[row] == 1):
+                    inicio=row
+                    trades["start"].append(Position.index[row])
+                    trades["Type of trade"].append("Long")
+                if (Position[row] == -1):
+                    inicio=row
+                    trades["start"].append(Position.index[row])
+                    trades["Type of trade"].append("Short")
+            if ((Position[row] == 0) & ((Position[row - 1] == 1) or (Position[row - 1] == -1))):
+                    if (Position[row-1] == 1):
+                        final=row
+                        trades["end"].append(Position.index[row])
+                        trades["Nº of days"].append(final-inicio)
+                        return_long = self.dataframe[f"Daily_returns_{self.stock}"].iloc[inicio:final]
+                        trades["returns"].append(return_long.sum()*100)
+                        trades["sharp"].append((252**0.5)*(return_long.mean()/return_long.std()))
+                        inicio = 0
+                        final = 0
+                    if (Position[row-1] == -1):
+                        final = row
+                        trades["end"].append(Position.index[row])
+                        trades["Nº of days"].append(final - inicio)
+                        return_short = self.dataframe[f"Daily_returns_{self.stock}"].iloc[inicio:final]
+                        trades["returns"].append(return_long.sum()*100)
+                        trades["sharp"].append((252 ** 0.5) * (return_short.mean() / return_short.std()))
+                        inicio
+                        final = 0
+        resumen=f"""Se han realizado {len(trades["Type of trade"])} operaciones de trading
+El resto de datos están en la variable trades
+                    """
+        return print(resumen), trades
+
 
 
     def signal_construction (self):
@@ -40,20 +83,17 @@ class histogram_retracement() :
     •	Short signals are entered if the histogram retraces 25 percent of its maximum value since its last cross
     above zero.
     """
-        name = str(self.stock)
-        self.dataframe[f'12EMA_{name}'] = self.dataframe[f'{self.stock}'].ewm(span=self.EMA_days_12,
-                                                                                    adjust=False, axis=0).mean()
-        self.dataframe[f'26EMA_{name}'] = self.dataframe[f'{self.stock}'].ewm(span=self.EMA_days_26, adjust=False, axis=0).mean()
-        self.dataframe[f'MACD_{name}'] = self.dataframe[f'12EMA_{self.stock}']-self.dataframe[f'26EMA_{self.stock}']
-        self.dataframe[f'Senal_MACD_{name}']=self.dataframe[f'MACD_{self.stock}'].ewm(span=9, adjust=False, axis=0).mean()
-        self.dataframe[f'Histograma_MACD_{name}']=self.dataframe[f'MACD_{self.stock}']-self.dataframe[f'Senal_MACD_{self.stock}']
+
+        EMA_12 = self.dataframe[f'{self.stock}'].ewm(span=self.EMA_days_12, adjust=False, axis=0).mean()
+        EMA_26 = self.dataframe[f'{self.stock}'].ewm(span=self.EMA_days_26, adjust=False, axis=0).mean()
+        MACD = EMA_12-EMA_26
+        Senal_MACD =MACD.ewm(span=9, adjust=False, axis=0).mean()
+        self.dataframe[f'Histograma_MACD_{self.name}']=MACD-Senal_MACD
         #Troughs and peaks are needed for the 2nd condition of long signals and short signals
-        self.dataframe[f'Trough_{name}']=self.dataframe[f'Histograma_MACD_{self.stock}'].rolling(self.MXMN_rw).min()
-        self.dataframe[f'Peak_{name}']=self.dataframe[f'Histograma_MACD_{self.stock}'].rolling(self.MXMN_rw).max()
+
         #get_max_min(self.dataframe,self.stock)
         #Standard deviation is needed for the 1st condition of long signals and short signals
-        self.dataframe[f"Daily_returns_{self.stock}"]=self.dataframe[self.stock].pct_change()
-        self.dataframe[f'20STD_{name}']=self.dataframe[f"Daily_returns_{self.stock}"].rolling(self.STD_rw).std()
+        self.dataframe[f"Daily_returns_{self.stock}"]=self.dataframe[self.stock].pct_change(1)
         self.sell_buy_function()
         self.dataframe.fillna(0, inplace=True) #We eliminate the NaN
 
@@ -64,25 +104,30 @@ class histogram_retracement() :
     def sell_buy_function(self):
         """This function creates for a given self.dataframe, a column of daily returns, sell and buy signals according to
         histogram retracement signals, position and SL, TP"""
-        name = str(self.stock)
+
         rows, columns = self.dataframe.shape
-        # series to be analized
+
+        # Position information
         position = pd.Series(data=np.zeros(shape=rows), name="Position")
         sell_signal = pd.Series(data=np.zeros(shape=rows), name="Sell_Signal")
         buy_signal = pd.Series(data=np.zeros(shape=rows), name="Buy_Signal")
         #stop_loss = pd.Series(data=np.zeros(shape=rows), name="stop_loss")
         #take_profit = pd.Series(data=np.zeros(shape=rows), name="take_profit")
+        #Columns for conditions
         His_entry_long = pd.Series(data=np.zeros(shape=rows), name="Histogram entry long")
         His_entry_short = pd.Series(data=np.zeros(shape=rows), name="Histogram entry short")
-        # condiciones
-        condicion_sell = np.where(((self.dataframe[f'Histograma_MACD_{name}']) > 0) & (
-                    (self.dataframe[f'Histograma_MACD_{name}']) < (self.k_entry * self.dataframe[f'Peak_{name}'])) & (
-                                              (self.dataframe[f'Histograma_MACD_{name}']) > (
-                                                  0.5 * self.dataframe[f'20STD_{name}'])), 1, 0)
-        condicion_buy = np.where(((self.dataframe[f'Histograma_MACD_{name}']) < 0) & (
-                    (self.dataframe[f'Histograma_MACD_{name}']) > (self.k_entry * self.dataframe[f'Trough_{name}'])) & (
-                                             (self.dataframe[f'Histograma_MACD_{name}']) < (
-                                                 -0.5 * self.dataframe[f'20STD_{name}'])), 1, 0)
+        Trough = self.dataframe[f'Histograma_MACD_{self.stock}'].rolling(self.MXMN_rw).min()
+        Peak = self.dataframe[f'Histograma_MACD_{self.stock}'].rolling(self.MXMN_rw).max()
+        STD_20=self.dataframe[f"Daily_returns_{self.stock}"].rolling(self.STD_rw).std()
+        #Conditions
+        condicion_sell = np.where(((self.dataframe[f'Histograma_MACD_{self.name}']) > 0) & (
+                    (self.dataframe[f'Histograma_MACD_{self.name}']) < (self.k_entry * Peak)) & (
+                                              (self.dataframe[f'Histograma_MACD_{self.name}']) > (
+                                                  0.5 * STD_20)), 1, 0)
+        condicion_buy = np.where(((self.dataframe[f'Histograma_MACD_{self.name}']) < 0) & (
+                    (self.dataframe[f'Histograma_MACD_{self.name}']) > (self.k_entry * Trough)) & (
+                                             (self.dataframe[f'Histograma_MACD_{self.name}']) < (
+                                                 -0.5 * STD_20)), 1, 0)
 
         for row in range(1, rows):
             # if we have no position
@@ -92,13 +137,13 @@ class histogram_retracement() :
                     position[row] = -1
                     # stop_loss[row]=self.dataframe[self.stock][row]*SL["S"]
                     # take_profit[row]=self.dataframe[self.stock][row]*TP["S"]
-                    His_entry_short[row] = self.dataframe[f'Histograma_MACD_{name}'][row]
+                    His_entry_short[row] = self.dataframe[f'Histograma_MACD_{self.name}'][row]
                 elif condicion_buy[row - 1]:
                     buy_signal[row] = 1
                     position[row] = 1
                     # stop_loss[row]=self.dataframe[self.stock][row]*SL["L"]
                     # take_profit[row]=self.dataframe[name][row]*TP["L"]
-                    His_entry_long[row] = self.dataframe[f'Histograma_MACD_{name}'][row]
+                    His_entry_long[row] = self.dataframe[f'Histograma_MACD_{self.name}'][row]
                 else:
                     sell_signal[row] = 0
                     buy_signal[row] = 0
@@ -112,9 +157,9 @@ class histogram_retracement() :
                     position[row]= 1
                 if (self.dataframe[self.stock][row] < stop_loss[row-1]) or (self.dataframe[self.stock][row] > take_profit[row-1]):
                     position[row]= 0"""
-                if (self.dataframe[f'Histograma_MACD_{name}'][row] > self.k_exit * His_entry_long[row - 1]):
+                if (self.dataframe[f'Histograma_MACD_{self.name}'][row] > self.k_exit * His_entry_long[row - 1]):
                     position[row] = 1
-                if (self.dataframe[f'Histograma_MACD_{name}'][row] < self.k_exit * His_entry_long[row - 1]):
+                if (self.dataframe[f'Histograma_MACD_{self.name}'][row] < self.k_exit * His_entry_long[row - 1]):
                     position[row] = 0
 
             # if we are short
@@ -126,16 +171,16 @@ class histogram_retracement() :
                     position[row]= -1
                 if (self.dataframe[self.stock][row] > stop_loss[row-1]) or (self.dataframe[self.stock][row] < take_profit[row-1]):
                     position[row]= 0"""
-                if (self.dataframe[f'Histograma_MACD_{name}'][row] < self.k_exit * His_entry_long[row - 1]):
+                if (self.dataframe[f'Histograma_MACD_{self.name}'][row] < self.k_exit * His_entry_long[row - 1]):
                     position[row] = -1
-                if (self.dataframe[f'Histograma_MACD_{name}'][row] > self.k_exit * His_entry_long[row - 1]):
+                if (self.dataframe[f'Histograma_MACD_{self.name}'][row] > self.k_exit * His_entry_long[row - 1]):
                     position[row] = 0
 
-        self.dataframe[f"Sell_signal_{name}"] = sell_signal.values
-        self.dataframe[f"Buy_signal_{name}"] = buy_signal.values
-        self.dataframe[f"Position_{name}"] = position.values
-        self.dataframe[f"His_entry_long_{name}"] = His_entry_long.values
-        self.dataframe[f"His_entry_short_{name}"] = His_entry_short.values
+        self.dataframe[f"Sell_signal_{self.name}"] = sell_signal.values
+        self.dataframe[f"Buy_signal_{self.name}"] = buy_signal.values
+        self.dataframe[f"Position_{self.name}"] = position.values
+        #self.dataframe[f"His_entry_long_{name}"] = His_entry_long.values
+        #self.dataframe[f"His_entry_short_{name}"] = His_entry_short.values
         # self.dataframe[f"SL_{self.stock}"]=stop_loss.values
         # self.dataframe[f"TP_{self.stock}"]=take_profit.values
 
@@ -145,7 +190,7 @@ class histogram_retracement() :
 
     def get_max_min(self):
         """ Creates and appends two columns to the self.dataframe that have the maximum and minimum value of the self.stock.
-        it is build such that it gets the max and min of every time the funcion Histogram_MACD crosses zero. """
+        it is built to get the max and min in between two Histogram_MACD crosses zero. """
 
         maxs = []  # list to contain max value
         pos_maxs = []  # position max
@@ -206,39 +251,35 @@ class histogram_retracement() :
         index0 = self.dataframe.resample('Y').sum().index.year
         index1 = self.dataframe.resample('Y').sum().index.year
         # We add a row called total to calculate the total value of the rest
-        w = pd.DataFrame(index=["Total"])
+        w = pd.DataFrame(index=["Promedio"])
         index1.append(w.index)
         returns_ = pd.DataFrame(columns=columns, index=index1, data=0)
         for row in index0:
+            # Short
             try:
-                # Short
-                returns_.loc[row, "Yearly Return Short"] = \
-                self.dataframe[f"Daily_returns_{self.stock}"].loc[self.dataframe[f"Position_{self.stock}"] == -1][str(row)].sum() * -100
-                returns_.loc[row, "Volatility Short"] = \
-                self.dataframe[f"Daily_returns_{self.stock}"].loc[self.dataframe[f"Position_{self.stock}"] == -1][str(row)].std() * -100
-                returns_.loc[row, "Sharp Ratio Short"] = (
-                            returns_.loc[row, "Yearly Return Short"] / returns_.loc[row, "Volatility Short"])
+                short_returns=self.dataframe[f"Daily_returns_{self.stock}"].loc[self.dataframe[f"Position_{self.stock}"] == -1][str(row)]
+                returns_.loc[row, "Yearly Return Short"] = short_returns.sum() * -100
+                returns_.loc[row, "Volatility Short"] = (252**0.5)*short_returns.std() * 100
+                returns_.loc[row, "Sharp Ratio Short"] = ((12**0.5)* short_returns.mean() / short_returns.std())
             except:
                 pass
             # Long
             try:
-                returns_.loc[row, "Yearly Return Long"] = \
-                self.dataframe[f"Daily_returns_{self.stock}"].loc[self.dataframe[f"Position_{self.stock}"] == 1][str(row)].sum() * 100
-                returns_.loc[row, "Volatility Long"] = \
-                self.dataframe[f"Daily_returns_{self.stock}"].loc[self.dataframe[f"Position_{self.stock}"] == 1][str(row)].std() * 100
-                returns_.loc[row, "Sharp Ratio Long"] = (
-                            returns_.loc[row, "Yearly Return Long"] / returns_.loc[row, "Volatility Long"])
+                long_returns=self.dataframe[f"Daily_returns_{self.stock}"].loc[self.dataframe[f"Position_{self.stock}"] == 1][str(row)]
+                returns_.loc[row, "Yearly Return Long"] = long_returns.sum() * 100
+                returns_.loc[row, "Volatility Long"] = (252**0.5)*long_returns.std() * 100
+                returns_.loc[row, "Sharp Ratio Long"] = ((252**0.5)*long_returns.mean()/long_returns.std())
                 returns_.fillna(0, inplace=True)  # We eliminate the NaN
             except:
                 pass
         # as the row total is not an iterable, but a result of the previous, we put it out of the loop  
-        returns_.loc["Total", :] = [returns_["Yearly Return Short"].sum(), returns_["Volatility Short"].sum(),
-                                    returns_["Sharp Ratio Short"].sum(), returns_["Yearly Return Long"].sum(),
-                                    returns_["Volatility Long"].sum(), returns_["Sharp Ratio Long"].sum()]
-        Total_Return_Short = returns_.loc["Total", "Yearly Return Short"]
-        Total_Return_Long = returns_.loc["Total", "Yearly Return Long"]
-        Total_sum = Total_Return_Short + Total_Return_Long
-        return returns_, Total_Return_Short, Total_Return_Long, Total_sum
+        returns_.loc["Promedio", :] = [returns_["Yearly Return Short"].mean(), returns_["Volatility Short"].mean(),
+                                    returns_["Sharp Ratio Short"].mean(), returns_["Yearly Return Long"].mean(),
+                                    returns_["Volatility Long"].mean(), returns_["Sharp Ratio Long"].mean()]
+        #Total_Return_Short = returns_.loc["Total", "Yearly Return Short"]
+        #Total_Return_Long = returns_.loc["Total", "Yearly Return Long"]
+        #Total_sum = Total_Return_Short + Total_Return_Long
+        return returns_ #, Total_Return_Short, Total_Return_Long, Total_sum
 
 
 
@@ -251,8 +292,7 @@ class histogram_retracement() :
         ax.set_xlabel('Time')
         ax.set_ylabel('Trading strategy')
         ax.set_title('Histogram retracement', fontsize=18, fontweight='bold')
-        name=str(self.stock)
-        self.dataframe[f"Histograma_MACD_{name}"].plot(ax=ax)  # Histogram
+        self.dataframe[f"Histograma_MACD_{self.name}"].plot(ax=ax)  # Histogram
         ax.plot(self.dataframe.index, np.zeros(self.dataframe[self.stock].shape[0]))  # line of zeros
         # señales de compra
         ax.plot(self.dataframe.loc[self.dataframe[f"Sell_signal_{self.stock}"] == 1].index,
@@ -267,8 +307,8 @@ class histogram_retracement() :
         fig1 = plt.figure()  # an empty figure with no Axes
         fig1, ax1 = plt.subplots(figsize=(30, 9))
         ax1.set_xlabel('Time')
-        ax1.set_ylabel(f'{name} Price')
-        ax1.set_title(f'{name} Stock Price', fontsize=18, fontweight='bold')
+        ax1.set_ylabel(f'{self.name} Price')
+        ax1.set_title(f'{self.name} Stock Price', fontsize=18, fontweight='bold')
         ax1.plot(self.dataframe[self.stock].index, self.dataframe[self.stock], label="self.stock price")
         # señales de venta
         ax1.plot(self.dataframe.loc[self.dataframe[f"Sell_signal_{self.stock}"] == 1].index,
