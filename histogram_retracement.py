@@ -1,9 +1,8 @@
 # Librerias utilizadas
-import gym
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import itertools
+
 pd.set_option('display.float_format',  '{:,.2f}'.format)
 
 class histogram_retracement() :
@@ -49,9 +48,9 @@ class histogram_retracement() :
                         trades["end"].append(Position.index[row])
                         trades["Nº of days"].append(final - inicio)
                         return_short = self.dataframe[f"Daily_returns_{self.stock}"].iloc[inicio:final]
-                        trades["returns"].append(return_long.sum()*100)
+                        trades["returns"].append(return_short.sum()*100)
                         trades["sharp"].append((252 ** 0.5) * (return_short.mean() / return_short.std()))
-                        inicio
+                        inicio = 0
                         final = 0
         resumen=f"""Se han realizado {len(trades["Type of trade"])} operaciones de trading
 El resto de datos están en la variable trades
@@ -276,10 +275,10 @@ El resto de datos están en la variable trades
         returns_.loc["Promedio", :] = [returns_["Yearly Return Short"].mean(), returns_["Volatility Short"].mean(),
                                     returns_["Sharp Ratio Short"].mean(), returns_["Yearly Return Long"].mean(),
                                     returns_["Volatility Long"].mean(), returns_["Sharp Ratio Long"].mean()]
-        #Total_Return_Short = returns_.loc["Total", "Yearly Return Short"]
-        #Total_Return_Long = returns_.loc["Total", "Yearly Return Long"]
-        #Total_sum = Total_Return_Short + Total_Return_Long
-        return returns_ #, Total_Return_Short, Total_Return_Long, Total_sum
+        Avg_Return_Short = returns_.loc["Promedio", "Yearly Return Short"]
+        Avg_Return_Long = returns_.loc["Promedio", "Yearly Return Long"]
+        Avg_sum = Avg_Return_Short + Avg_Return_Long
+        return returns_, Avg_Return_Short, Avg_Return_Long, Avg_sum
 
 
 
@@ -319,4 +318,5 @@ El resto de datos están en la variable trades
                  self.dataframe[self.stock][self.dataframe[f"Buy_signal_{self.stock}"] == 1], '^', markersize=10, color='g',
                  label="Buying signals")
         ax1.legend()
+        plt.show()
         return fig, fig1

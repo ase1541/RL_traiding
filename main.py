@@ -1,6 +1,7 @@
 import investpy
 import datetime as dt
 import pandas as pd
+import matplotlib.pyplot as plt
 from histogram_retracement import histogram_retracement
 
 # Define all posible combinations for the backtesting
@@ -21,18 +22,18 @@ data = investpy.stocks.get_stock_historical_data(stock, country='spain', from_da
 serie = "Close"
 dataframe=pd.DataFrame(columns=[stock])
 dataframe[stock] = data[serie]
-
-h=0
-k_entry = params["k_entry"][h]  # percentage of peaks and troughs
-k_exit = params["k_exit"][h]
-EMA_days_12 = params["EMA_days_12"][h]
-EMA_days_26 = params["EMA_days_26"][h]
-STD_rw = params["STD_rollingwindow"][h]
-MXMN_rw = params["MAXMIN_rollingwindow"][h]
-
-strategy = histogram_retracement(stock, dataframe, k_entry, k_exit, EMA_days_12, EMA_days_26, STD_rw, MXMN_rw)
+##Resultados backtesting:
+#Max mean return short
+#{'k_entry': 0.95, 'k_exit': 0.55, 'EMA_days_12': 3, 'EMA_days_26': 50, 'STD_rollingwindow': 20, 'MAXMIN_rollingwindow': 50}
+#Max mean return long
+#{'k_entry': 0.95, 'k_exit': 0.75, 'EMA_days_12': 3, 'EMA_days_26': 30, 'STD_rollingwindow': 10, 'MAXMIN_rollingwindow': 50}
+#Max mean return sum
+#{'k_entry': 0.85, 'k_exit': 0.75, 'EMA_days_12': 3, 'EMA_days_26': 20, 'STD_rollingwindow': 50, 'MAXMIN_rollingwindow': 50}
+strategy = histogram_retracement(stock=stock, dataframe=dataframe, k_entry=0.85, k_exit=0.75, EMA_days_12=3, EMA_days_26=20, STD_rw=50, MXMN_rw=50)
 strategy.signal_construction()
 _ ,trades = strategy.count_trades()
-a=strategy.get_returns()
+returns, _,_,_ = strategy.get_returns()
+#strategy.plot_signals()
+#plt.show()
 
 
