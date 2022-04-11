@@ -24,8 +24,7 @@ for z in range(len(comb)):
     Avg_Return_Long.append(Long)
     Avg_Sum.append(Sum)
     print(f"Iteración {z} de {len(comb) - 1}", end="\r")
-    print(f"Parametros:{comb[z]} ", end="\r")
-    print(f"Return: {Avg_Sum[z]}", end="\r")
+
 
 print(f"""El maximo retorno medio de short es: {max(Avg_Return_Short)} 
 se da para el indice: {Avg_Return_Short.index(max(Avg_Return_Short))}

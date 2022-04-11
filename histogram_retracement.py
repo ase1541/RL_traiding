@@ -2,6 +2,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 pd.set_option('display.float_format',  '{:,.2f}'.format)
 
@@ -41,6 +42,10 @@ class histogram_retracement() :
                         return_long = self.dataframe[f"Daily_returns_{self.stock}"].iloc[inicio:final]
                         trades["returns"].append(return_long.sum()*100)
                         trades["sharp"].append((252**0.5)*(return_long.mean()/return_long.std()))
+                        if return_long.std() == np.nan:
+                            trades["sharp"].append(0)
+                        else:
+                            trades["sharp"].append((252 ** 0.5) * (return_long.mean() / return_long.std()))
                         inicio = 0
                         final = 0
                     if (Position[row-1] == -1):
@@ -49,14 +54,24 @@ class histogram_retracement() :
                         trades["Nº of days"].append(final - inicio)
                         return_short = self.dataframe[f"Daily_returns_{self.stock}"].iloc[inicio:final]
                         trades["returns"].append(return_short.sum()*100)
-                        trades["sharp"].append((252 ** 0.5) * (return_short.mean() / return_short.std()))
+                        if return_short.std() == np.nan:
+                            trades["sharp"].append(0)
+                        else:
+                            trades["sharp"].append((252 ** 0.5) * (return_short.mean() / return_short.std()))
                         inicio = 0
                         final = 0
+        #trades["sharp"]= [0 for i in trades["sharp"] if i == np.nan]
+        newlist = [x for x in trades["sharp"] if math.isnan(x) == False]
+
         resumen=f"""Se han realizado {len(trades["Type of trade"])} operaciones de trading
-El resto de datos están en la variable trades
+        - {trades["Nº of days"].count(1)} Operaciones duran solo un día
+        - {trades["Type of trade"].count("Long")} Son Short Selling
+        - {trades["Type of trade"].count("Short")} Son Long buying
+El sharp medio es de: {sum(newlist)/len(trades["sharp"])} 
+El retorno medio es de: {sum(trades["returns"])/len(trades["returns"])} %
+La duración media de las operaciones es de: {sum(trades["Nº of days"])/len(trades["Nº of days"])} Días
                     """
         return print(resumen), trades
-
 
 
     def signal_construction (self):
