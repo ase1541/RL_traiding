@@ -31,3 +31,5 @@ Once we have described the attributes of the class, we describe the methods it h
 3/**backtesting.py**: It is mandatory to perform a study of the best suiting parameters so we can simplify the labor later performed by the RL agent, hence a 
 backtesting is performed in order to retrieve the parameters that maximize the return of the strategy. We select discrete values for each of the attributes described 
 previously and generate all the possible combinations of these ones. After trying with 5 possible options for each parameter, we end up with 4096 possible combinations
+
+4/**Rl_algorithm.py**: Yet to be done
