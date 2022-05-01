@@ -6,7 +6,7 @@ keys = params.keys()
 values = (params[key] for key in keys)
 comb = [dict(zip(keys, combination)) for combination in itertools.product(*values)]
 
-returns_, Avg_Return_Short, Avg_Return_Long, Avg_Sum = [], [], [], []
+returns_, Avg_Sharp_Short, Avg_Sharp_Long, Avg_Sharp_sum = [], [], [], []
 
 for z in range(len(comb)):
     # apply trading strategy
@@ -20,28 +20,28 @@ for z in range(len(comb)):
     strategy.signal_construction()
     ret, Short, Long, Sum = strategy.get_returns()
     returns_.append(ret)
-    Avg_Return_Short.append(Short)
-    Avg_Return_Long.append(Long)
-    Avg_Sum.append(Sum)
+    Avg_Sharp_Short.append(Short)
+    Avg_Sharp_Long.append(Long)
+    Avg_Sharp_sum.append(Sum)
     print(f"Iteración {z} de {len(comb) - 1}", end="\r")
 
 
-print(f"""El maximo retorno medio de short es: {max(Avg_Return_Short)} 
-se da para el indice: {Avg_Return_Short.index(max(Avg_Return_Short))}
-y para la combinacion: {comb[Avg_Return_Short.index(max(Avg_Return_Short))]}
+print(f"""El maximo sharp medio de short es: {max(Avg_Sharp_Short)} 
+se da para el indice: {Avg_Sharp_Short.index(max(Avg_Sharp_Short))}
+y para la combinacion: {comb[Avg_Sharp_Short.index(max(Avg_Sharp_Short))]}
 La tabla de retornos es: """)# returns_
-returns_[Avg_Return_Short.index(max(Avg_Return_Short))]
+returns_[Avg_Sharp_Short.index(max(Avg_Sharp_Short))]
 
-print(f"""El maximo retorno medio de long es: {max(Avg_Return_Long)} 
-se da para el indice: {Avg_Return_Long.index(max(Avg_Return_Long))}
-y para la combinacion: {comb[Avg_Return_Long.index(max(Avg_Return_Long))]}
+print(f"""El maximo sharp medio de long es: {max(Avg_Sharp_Long)} 
+se da para el indice: {Avg_Sharp_Long.index(max(Avg_Sharp_Long))}
+y para la combinacion: {comb[Avg_Sharp_Long.index(max(Avg_Sharp_Long))]}
 La tabla de retornos es: """)# returns_
 print("\n")
-returns_[Avg_Return_Long.index(max(Avg_Return_Long))]
+returns_[Avg_Sharp_Long.index(max(Avg_Sharp_Long))]
 
-print(f"""El maximo retorno medio conjunto es: {max(Avg_Sum)} 
-se da para el indice: {Avg_Sum.index(max(Avg_Sum))}
-y para la combinacion: {comb[Avg_Sum.index(max(Avg_Sum))]}
+print(f"""El maximo sharp medio conjunto es: {max(Avg_Sharp_sum)} 
+se da para el indice: {Avg_Sharp_sum.index(max(Avg_Sharp_sum))}
+y para la combinacion: {comb[Avg_Sharp_sum.index(max(Avg_Sharp_sum))]}
 La tabla de retornos es: """)# returns_
 print("\n")
-returns_[Avg_Sum.index(max(Avg_Sum))]
+returns_[Avg_Sharp_sum.index(max(Avg_Sharp_sum))]

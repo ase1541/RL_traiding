@@ -22,6 +22,7 @@ data = investpy.stocks.get_stock_historical_data(stock, country='spain', from_da
 serie = "Close"
 dataframe=pd.DataFrame(columns=[stock])
 dataframe[stock] = data[serie]
+signal_features = data.drop(columns = [serie, "Currency"])
 ##Resultados backtesting:
 #Max mean return short
 #{'k_entry': 0.95, 'k_exit': 0.55, 'EMA_days_12': 3, 'EMA_days_26': 50, 'STD_rollingwindow': 20, 'MAXMIN_rollingwindow': 50}
@@ -29,7 +30,7 @@ dataframe[stock] = data[serie]
 #{'k_entry': 0.95, 'k_exit': 0.75, 'EMA_days_12': 3, 'EMA_days_26': 30, 'STD_rollingwindow': 10, 'MAXMIN_rollingwindow': 50}
 #Max mean return sum
 #{'k_entry': 0.85, 'k_exit': 0.75, 'EMA_days_12': 3, 'EMA_days_26': 20, 'STD_rollingwindow': 50, 'MAXMIN_rollingwindow': 50}
-strategy = histogram_retracement(stock=stock, dataframe=dataframe, k_entry=0.85, k_exit=0.75, EMA_days_12=3, EMA_days_26=20, STD_rw=50, MXMN_rw=50)
+strategy = histogram_retracement(stock=stock, dataframe=dataframe, k_entry=0.95, k_exit=0.75, EMA_days_12=3, EMA_days_26=50, STD_rw=50, MXMN_rw=10)
 strategy.signal_construction()
 _ ,trades = strategy.count_trades()
 returns, _,_,_ = strategy.get_returns()

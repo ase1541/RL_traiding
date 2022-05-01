@@ -290,10 +290,10 @@ La duración media de las operaciones es de: {sum(trades["Nº of days"])/len(tra
         returns_.loc["Promedio", :] = [returns_["Yearly Return Short"].mean(), returns_["Volatility Short"].mean(),
                                     returns_["Sharp Ratio Short"].mean(), returns_["Yearly Return Long"].mean(),
                                     returns_["Volatility Long"].mean(), returns_["Sharp Ratio Long"].mean()]
-        Avg_Return_Short = returns_.loc["Promedio", "Yearly Return Short"]
-        Avg_Return_Long = returns_.loc["Promedio", "Yearly Return Long"]
-        Avg_sum = Avg_Return_Short + Avg_Return_Long
-        return returns_, Avg_Return_Short, Avg_Return_Long, Avg_sum
+        Avg_Sharp_Short = returns_.loc["Promedio", "Sharp Ratio Short"]
+        Avg_Sharp_Long = returns_.loc["Promedio", "Sharp Ratio Long"]
+        Avg_Sharp_sum = Avg_Sharp_Short + Avg_Sharp_Long
+        return returns_, Avg_Sharp_Short, Avg_Sharp_Long, Avg_Sharp_sum
 
 
 
