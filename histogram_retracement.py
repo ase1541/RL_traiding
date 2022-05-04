@@ -293,6 +293,7 @@ La duración media de las operaciones es de: {sum(trades["Nº of days"])/len(tra
         Avg_Sharp_Short = returns_.loc["Promedio", "Sharp Ratio Short"]
         Avg_Sharp_Long = returns_.loc["Promedio", "Sharp Ratio Long"]
         Avg_Sharp_sum = Avg_Sharp_Short + Avg_Sharp_Long
+
         return returns_, Avg_Sharp_Short, Avg_Sharp_Long, Avg_Sharp_sum
 
 

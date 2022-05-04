@@ -1,7 +1,10 @@
-from main import params, dataframe, stock
+from main import dataframe, stock
 from histogram_retracement import histogram_retracement
 import itertools
 # Define all posible combinations for the backtesting
+params = {"k_entry": [0.55, 0.75, 0.85, 0.95], "k_exit": [0.15, 0.55, 0.75, 0.95],
+          "EMA_days_12": [3, 5, 10, 12], "EMA_days_26": [20, 26, 30, 50],
+          "STD_rollingwindow": [10, 20, 30, 50], "MAXMIN_rollingwindow": [10, 26, 30, 50]}
 keys = params.keys()
 values = (params[key] for key in keys)
 comb = [dict(zip(keys, combination)) for combination in itertools.product(*values)]
