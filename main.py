@@ -24,8 +24,8 @@ strategy = histogram_retracement(stock=stock, dataframe=dataframe, k_entry=0.95,
 strategy.signal_construction()
 _ ,trades = strategy.count_trades()
 returns, _,_,_ = strategy.get_returns()
-strategy.plot_signals()
-plt.show()
+#strategy.plot_signals()
+#plt.show()
 # After performing calculus we drop unnecessary columns
 dataframe = dataframe.drop(columns=[f"Daily_returns_{stock}", f"Sell_signal_{stock}", f"Buy_signal_{stock}",
              f"Position_{stock}"])
