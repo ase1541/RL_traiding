@@ -32,4 +32,8 @@ Once we have described the attributes of the class, we describe the methods it h
 backtesting is performed in order to retrieve the parameters that maximize the return of the strategy. We select discrete values for each of the attributes described 
 previously and generate all the possible combinations of these ones. After trying with 5 possible options for each parameter, we end up with 4096 possible combinations
 
-4/**Rl_algorithm.py**: Yet to be done
+4/**Rl_framework.py**: In this script the Stock Environment is constructed, and also some functions such as the ones to train the different agents and get their validations and sharpe validation ratios.
+
+5/**train_RL.py**: In this script the test,validation and training data get splitted. Afterwards, the train and validation of the algorithm takes place. 
+
+6/**Rl_framework.py**: In this script the final testing of the algorithm performance is done with the library pyfolio, that allows to get a lot of information from a trading strategy.
