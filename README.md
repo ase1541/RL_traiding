@@ -1,7 +1,7 @@
 # RL_traiding
 
-The very AIM of this project is to build a RL Agent able to find the optimal parameters for a trading strategy called Histogram Retracement.
-Therefore, the Agent will select the parameters more suitable to maximize sharp ratio of each transaction. There are several scripts in this project:
+The very AIM of this project is to build a RL Agent able to do trading for one stock. The trading strategy implemented is not used for the RL agent.
+
 
 1/ **main.py**: It is the general code where the general calls to the other scripts are done. Here we obtain the dataset for the stock that we want to study
 through the library invest.py.
